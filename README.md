@@ -15,6 +15,27 @@ CAGS picks the task size at run time from the paper's own cost model. It needs n
 
 The time spent measuring and sampling **is included** in every reported CAGS result.
 
+## What is new, and related work
+
+Run-time granularity control is not new. To our knowledge, CAGS differs from earlier methods in four ways:
+
+1. **The threshold comes from an explicit efficiency target `η` and the overhead `h` measured on the actual thread count**, contention included. We measured `h` rising from 0.03 µs at 1 thread to 8.5 µs at 12 threads, so a constant tuned once per machine cannot fit every thread count.
+2. **No programmer cost functions, and no compiler or runtime changes.** It runs on stock OpenMP (GCC libgomp).
+3. **The runtime's own task-queue cap is part of the model.** libgomp silently serializes a `taskloop` that would exceed 64×P queued tasks; CAGS's loop rule provably stays under the cap.
+4. **The guarantee bounds total CPU, not only time**, and CAGS is charged for its own decision cost in every result.
+
+| Method | Decision signal | Programmer input | Toolchain change | Provable bound |
+|---|---|---|---|---|
+| Lazy task creation (Mohr et al., TPDS 1991) | idle worker asks for work | none | runtime + compiler | none known |
+| Adaptive cut-off (Duran et al., SC 2008) | profiled subtree cost | none | OpenMP runtime | none known |
+| AdaptiveTC (Wang et al., CGO 2010) | demand for tasks | none | Cilk system | none known |
+| Lazy binary splitting (Tzannes et al., PPoPP 2010) | local queue state | none | runtime scheduler | none known |
+| Multiversioning (Thoman et al., CCPE 2014) | local task demand | none | compiler + runtime | none known |
+| Static cut-off (Iwasaki & Taura, PACT 2016) | compile-time analysis | none | compiler | none known |
+| Oracle-guided (Acar et al., JFP 2016; PPoPP 2019) | predicted cost | cost function per parallel function; κ tuned per machine | runtime (Cilk extension) | time |
+| Heartbeat (Acar et al., PLDI 2018; Su et al., ASPLOS 2024) | periodic heartbeat | none | runtime + compiler | time |
+| **CAGS (this work)** | sampled `t(s)` + measured `h` per P | size parameter; monotone cost | **none (stock OpenMP)** | **CPU and time** |
+
 ## Layout
 
 | Path | Contents |
